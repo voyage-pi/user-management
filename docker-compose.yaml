@@ -1,0 +1,4 @@
+services:
+  user-management:
+    build: .
+    container_name: user-management
