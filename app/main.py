@@ -1,15 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.services.redis_client import redis_client
-from app.routes import base_router
-from app.routes import maps_router
+from app.routes import user_router
 
 app = FastAPI()
 
-
-app.include_router(base_router.router)
-app.include_router(maps_router.router)
+app.include_router(user_router.router)
 
 origins = [
     "http://localhost:8080",
@@ -26,16 +22,4 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Maps Wrapper is Running!"}
-
-@app.post("/cache/{key}")
-async def set_cache(key: str, value: str):
-    await redis_client.set(key, value)
-    return {"message": f"Stored {key} -> {value}"}
-
-@app.get("/cache/{key}")
-async def get_cache(key: str):
-    value = await redis_client.get(key)
-    if value:
-        return {"key": key, "value": value}
-    return {"message": "Key not found"}
+    return {"message": "User Management is Running!"}
