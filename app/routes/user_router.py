@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-
+from app.services.supabase_client import select_all_users
 router = APIRouter(
     prefix="/user",
     tags=["user"],
@@ -7,5 +7,5 @@ router = APIRouter(
 
 
 @router.get("/")
-async def read_root():
-    return {"User Management is Running!"}
+async def get_all_users():
+    return select_all_users()
