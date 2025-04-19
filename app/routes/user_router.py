@@ -1,8 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, File, UploadFile
 
 from app.models.user import UserLogin, UserRegister
 
-from app.handlers.user_handler import select_all_users, login_user, register_user, get_user_info
+from app.handlers.user_handler import select_all_users, login_user, register_user, get_user_info, update_avatar, update_banner
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -10,11 +10,6 @@ router = APIRouter(prefix="/user", tags=["user"])
 async def get_all_users():
     """Retrieve all users from the database."""
     return select_all_users()
-
-@router.get("/{user_id}")
-async def get_user(user_id: int):
-    """Get information for a specific user by ID."""
-    return get_user_info(user_id)
 
 @router.post("/login")
 async def login(user: UserLogin):
@@ -25,3 +20,18 @@ async def login(user: UserLogin):
 async def register(user: UserRegister):
     """Register a new user account."""
     return register_user(user)
+
+@router.get("/{user_id}")
+async def get_user(user_id: int):
+    """Get information for a specific user by ID."""
+    return get_user_info(user_id)
+
+@router.patch("/{user_id}/avatar")
+async def upload_avatar(user_id: int, avatar: UploadFile = File(...)):
+    """Update the avatar for a specific user."""
+    return await update_avatar(user_id, avatar)
+
+@router.patch("/{user_id}/banner")
+async def upload_banner(user_id: int, banner: UploadFile = File(...)):
+    """Update the banner for a specific user."""
+    return await update_banner(user_id, banner)
