@@ -10,7 +10,7 @@ class UserRegister(BaseModel):
     password:str
 
 class User(BaseModel):
-    username:str|None
+    tag:str|None
     name:str
     email:str
     avatar_url:str | None

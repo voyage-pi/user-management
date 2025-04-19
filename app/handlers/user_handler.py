@@ -48,6 +48,7 @@ def login_user(user: UserLogin):
 
 def register_user(user: UserRegister):
     insertUser=user.model_dump()
+    insertUser["tag"]=user.name.lower()
     password=insertUser.pop("password")
     if len(password) <6:
         return ResponseBody({},"Password has to be greater then 6 characters!",status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -64,4 +65,4 @@ def register_user(user: UserRegister):
         return ResponseBody({},"User registered sucessfully!", status.HTTP_200_OK) 
     except Exception as e :
         print(e)
-        return ResponseBody({},e.message,status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return ResponseBody({},"User already exists",status.HTTP_409_CONFLICT)
