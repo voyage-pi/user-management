@@ -7,6 +7,9 @@ import time
 
 def get_current_user(token:str| None):
     try:
+        print(token)
+        if token==None:
+            raise Exception()
         # Verify token with Supabase
         auth_user = supabase.auth.get_user(token)
         user_email=auth_user.user.user_metadata['email']
