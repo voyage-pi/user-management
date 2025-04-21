@@ -10,7 +10,7 @@ async def get_all_trips():
     return select_all_trips()
 
 @router.post("/")
-async def create_new_trip(user_id: int, trip_id: int):
+async def create_new_trip(trip_id: str, user_id: int = 50):
     """Create a new trip in the database."""
     return create_trip(user_id, trip_id)
 
@@ -30,27 +30,27 @@ async def get_user_invites(user_id: int):
     return select_user_invites(user_id)
 
 @router.post("/invitations")
-async def create_invitation(user_id: int, trip_id: int):
+async def create_invitation(user_id: int, trip_id: str):
     """Invite a user to a trip."""
     return make_invite(user_id, trip_id)
 
 @router.patch("/invitations")
-async def accept_trip_invitation(user_id: int, trip_id: int):
+async def accept_trip_invitation(user_id: int, trip_id: str):
     """Accept an invitation to a trip."""
     return accept_invitation(user_id, trip_id)
 
 @router.delete("/invitations")
-async def reject_trip_invitation(user_id: int, trip_id: int):
+async def reject_trip_invitation(user_id: int, trip_id: str):
     """Reject an invitation to a trip."""
     return reject_invitation(user_id, trip_id)
 
 @router.delete("/{trip_id}/participants/{user_id}")
-async def remove_trip_participant(trip_id: int, user_id: int):
+async def remove_trip_participant(trip_id: str, user_id: int):
     """Remove a participant from a trip."""
     return remove_participant(user_id, trip_id)
 
 @router.delete("/{trip_id}/owner")
-async def remove_trip_owner(trip_id: int):
+async def remove_trip_owner(trip_id: str):
     """Remove the owner from a trip and promote the longest-participating member to owner."""
     return remove_owner(trip_id)
 

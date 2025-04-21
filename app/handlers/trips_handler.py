@@ -1,4 +1,5 @@
 from app.services.supabase_client import supabase
+from datetime import datetime
 
 def select_all_trips():
     response = supabase.table("user_trips").select("*").execute()
@@ -7,8 +8,13 @@ def select_all_trips():
     else:
         return {"message": "No trips found!"}
     
-def create_trip(user_id: int, trip_id: int):
-    response = supabase.table("user_trips").insert({"user_id": user_id, "trip_id": trip_id, "status": "owner"}).execute()
+def create_trip(user_id: int, trip_id: str):
+    response = supabase.table("user_trips").insert({
+        "user_id": user_id, 
+        "trip_id": trip_id, 
+        "status": "owner",
+        "joined_trip_at": datetime.now().isoformat()
+    }).execute()
     if response.data:
         return response.data
     else:
@@ -43,7 +49,7 @@ def select_user_invites(user_id: int):
     else:
         return {"message": "No trips found!"}
     
-def make_invite(user_id: int, trip_id: int):
+def make_invite(user_id: int, trip_id: str):
     # check if user is already in the trip
     response = supabase.table("user_trips").select("*").eq("user_id", user_id).eq("trip_id", trip_id).execute()
     if response.data:
@@ -55,28 +61,28 @@ def make_invite(user_id: int, trip_id: int):
     else:
         return {"message": "Invite failed!"}
 
-def accept_invitation(user_id: int, trip_id: int):
+def accept_invitation(user_id: int, trip_id: str):
     response = supabase.table("user_trips").update({"status": "participant"}).eq("user_id", user_id).eq("trip_id", trip_id).execute()
     if response.data:
         return response.data
     else:
         return {"message": "Acceptance failed!"}
     
-def reject_invitation(user_id: int, trip_id: int):
+def reject_invitation(user_id: int, trip_id: str):
     response = supabase.table("user_trips").delete().eq("user_id", user_id).eq("trip_id", trip_id).execute()
     if response.data:
         return response.data
     else:
         return {"message": "Rejection failed!"}
     
-def remove_participant(user_id: int, trip_id: int):
+def remove_participant(user_id: int, trip_id: str):
     response = supabase.table("user_trips").delete().eq("user_id", user_id).eq("trip_id", trip_id).eq("status", "participant").execute()
     if response.data:
         return response.data
     else:
         return {"message": "Removal failed!"}
     
-def remove_owner(trip_id: int):
+def remove_owner(trip_id: str):
     response1 = supabase.table("user_trips").delete().eq("trip_id", trip_id).eq("status", "owner").execute()
     print(response1.data)
     response2 = supabase.table("user_trips").select("*").eq("trip_id", trip_id).order("joined_trip_at", desc=True).execute()
