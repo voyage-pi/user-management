@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 
 from app.handlers.trips_handler import select_all_trips, create_trip, select_user_trips, select_user_invitations, select_user_invites, make_invite, accept_invitation, reject_invitation, remove_participant, remove_owner
+from typing import Annotated
+from app.services.middleware import get_current_user, require_auth
+from fastapi import APIRouter,Request,Body
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
@@ -9,10 +12,12 @@ async def get_all_trips():
     """Get all trips from the database."""
     return select_all_trips()
 
-@router.post("/")
-async def create_new_trip(trip_id: str, user_id: int = 50):
+@router.post("/save")
+@require_auth
+async def post_trip(trip_id:str,request:Request):
     """Create a new trip in the database."""
-    return create_trip(user_id, trip_id)
+    user = get_current_user(request)
+    return create_trip(user.id,trip_id)
 
 @router.get("/users/{user_id}")
 async def get_user_trips(user_id: int):
