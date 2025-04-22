@@ -5,23 +5,7 @@ from app.models.response import ResponseBody
 from datetime import datetime
 import time
 
-def get_current_user(token:str| None):
-    try:
-        print(token)
-        if token==None:
-            raise Exception()
-        # Verify token with Supabase
-        auth_user = supabase.auth.get_user(token)
-        user_email=auth_user.user.user_metadata['email']
-        response= supabase.table("user").select("*").eq("email", user_email).execute()
-        user_data=User(**(response.data[0]))
-        return ResponseBody(user_data.model_dump(),"",status.HTTP_200_OK)
-    except Exception as e:
-        print(e)
-        return ResponseBody({},
-            "Invalid authentication token",
-            status.HTTP_401_UNAUTHORIZED
-        )
+
 
 def login_user(user: UserLogin):
     try:
