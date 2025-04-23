@@ -1,15 +1,18 @@
-from fastapi import APIRouter, File, UploadFile
+from typing import Optional
+from fastapi import APIRouter,Cookie,File,UploadFile
 
 from app.models.user import UserLogin, UserRegister
 
-from app.handlers.user_handler import select_all_users, login_user, register_user, get_user_info, update_avatar, update_banner
+from app.handlers.user_handler import get_current_user, login_user, register_user, update_avatar, update_banner
 
 router = APIRouter(prefix="/user", tags=["user"])
 
+
+# voyage_at is the cookie with the access_token of the session of the user
 @router.get("/")
-async def get_all_users():
-    """Retrieve all users from the database."""
-    return select_all_users()
+async def get_user(voyage_at:Optional[str]=Cookie(None)):
+    """Get information for a specific user by ID."""
+    return get_current_user(voyage_at)
 
 @router.post("/login")
 async def login(user: UserLogin):
@@ -20,11 +23,6 @@ async def login(user: UserLogin):
 async def register(user: UserRegister):
     """Register a new user account."""
     return register_user(user)
-
-@router.get("/{user_id}")
-async def get_user(user_id: int):
-    """Get information for a specific user by ID."""
-    return get_user_info(user_id)
 
 @router.patch("/{user_id}/avatar")
 async def upload_avatar(user_id: int, avatar: UploadFile = File(...)):
