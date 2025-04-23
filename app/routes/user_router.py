@@ -9,7 +9,7 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 
 # voyage_at is the cookie with the access_token of the session of the user
-@router.get("/")
+@router.get("/current_user")
 async def get_user(voyage_at:Optional[str]=Cookie(None)):
     """Get information for a specific user by ID."""
     return get_current_user(voyage_at)
