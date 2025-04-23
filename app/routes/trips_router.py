@@ -1,9 +1,8 @@
 from fastapi import APIRouter
 
 from app.handlers.trips_handler import select_all_trips, create_trip, select_user_trips, select_user_invitations, select_user_invites, make_invite, accept_invitation, reject_invitation, remove_participant, remove_owner
-from typing import Annotated
 from app.services.middleware import get_current_user, require_auth
-from fastapi import APIRouter,Request,Body
+from fastapi import APIRouter,Request
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
