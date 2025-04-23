@@ -12,17 +12,17 @@ async def get_all_users():
     """Get all users from the database."""
     return select_all_users()
 
+@router.get("/current_user")
+@require_auth
+async def get_user_auth(request:Request):
+    """Get information for a specific user by ID."""
+    user =get_current_user(request)
+    return ResponseBody(user.model_dump(),"",status.HTTP_200_OK)
+
 @router.get("/{user_id}")
 async def get_user(user_id: int):
     """Get information for a specific user by ID."""
     return select_user_info(user_id)
-
-@router.get("/current_user")
-@require_auth
-async def get_user(request:Request):
-    """Get information for a specific user by ID."""
-    user =get_current_user(request)
-    return ResponseBody(user.model_dump(),"",status.HTTP_200_OK)
 
 @router.post("/login")
 async def login(user: UserLogin):
