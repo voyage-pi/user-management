@@ -78,14 +78,12 @@ async def update_avatar(user_id: int, avatar: UploadFile = File(...)):
             if avatar and avatar.filename != "":
                 image_filename = f"{username}-{avatar.filename}"
                 file_content = await avatar.read()
-                
-                # Detect content type properly
                 content_type = avatar.content_type
                 if not content_type:
                     content_type = mimetypes.guess_type(avatar.filename)[0] or "application/octet-stream"
                 
-                # According to Supabase docs, contentType needs to be specified properly
                 try:
+                    print("Attempting to upload to bucket:", SUPABASE_AVATAR_BUCKET)
                     upload_result = supabase_admin.storage.from_(SUPABASE_AVATAR_BUCKET).upload(
                         image_filename, 
                         file_content,
@@ -94,7 +92,7 @@ async def update_avatar(user_id: int, avatar: UploadFile = File(...)):
                             "upsert": "true"
                         }
                     )
-                    
+                    print("Upload response:", upload_result)    
                     # UploadResponse object returns a path on success
                     if upload_result and hasattr(upload_result, 'path'):
                         image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_AVATAR_BUCKET}/{image_filename}"
@@ -120,14 +118,11 @@ async def update_banner(user_id: int, banner: UploadFile = File(...)):
                 print("Banner was uploaded", banner.filename)
                 image_filename = f"{username}-{banner.filename}"
                 file_content = await banner.read()
-                
-                # Detect content type properly
                 content_type = banner.content_type
                 if not content_type:
                     content_type = mimetypes.guess_type(banner.filename)[0] or "application/octet-stream"
                 print(f"Detected content type: {content_type}")
                 
-                # According to Supabase docs, contentType needs to be specified properly
                 try:
                     print("Attempting to upload to bucket:", SUPABASE_BANNER_BUCKET)
                     upload_result = supabase_admin.storage.from_(SUPABASE_BANNER_BUCKET).upload(
