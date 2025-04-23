@@ -15,3 +15,5 @@ class User(BaseModel):
     email:str
     avatar_url:str | None
     banner_url:str | None
+    id:int
+

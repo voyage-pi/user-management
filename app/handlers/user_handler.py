@@ -1,29 +1,25 @@
 from fastapi import UploadFile, File
+import mimetypes
 
-from app.services.supabase_client import supabase
+from app.services.supabase_client import supabase, supabase_admin
 from app.config.settings import SUPABASE_URL, SUPABASE_AVATAR_BUCKET, SUPABASE_BANNER_BUCKET
 from fastapi import status
 from app.models.user import UserLogin, UserRegister,User
 from app.models.response import ResponseBody
 
+def select_all_users():
+    response = supabase.table("user").select("*").execute()
+    if response.data:
+        return response.data
+    else:
+        return {"message": "No users found!"}
 
-def get_current_user(token:str| None):
-    try:
-        print(token)
-        if token==None:
-            raise Exception()
-        # Verify token with Supabase
-        auth_user = supabase.auth.get_user(token)
-        user_email=auth_user.user.user_metadata['email']
-        response= supabase.table("user").select("*").eq("email", user_email).execute()
-        user_data=User(**(response.data[0]))
-        return ResponseBody(user_data.model_dump(),"",status.HTTP_200_OK)
-    except Exception as e:
-        print(e)
-        return ResponseBody({},
-            "Invalid authentication token",
-            status.HTTP_401_UNAUTHORIZED
-        )
+def select_user_info(user_id: int):
+    response = supabase.table("user").select("*").eq("id", user_id).execute()
+    if response.data:
+        return response.data[0]
+    else:
+        return {"message": "User not found!"}
 
 def login_user(user: UserLogin):
     try:
@@ -74,37 +70,89 @@ def register_user(user: UserRegister):
 
 
 async def update_avatar(user_id: int, avatar: UploadFile = File(...)):
-    response = supabase.table("user").select("username").eq("id", user_id).execute()
-    if response.data:
-        username = response.data[0]["username"]
-        image_url = None
-        if avatar and avatar.filename != "":
-            image_filename = f"{username}-{avatar.filename}"
-            file_content = await avatar.read()
-            reponse = supabase.storage.from_(SUPABASE_AVATAR_BUCKET).upload(image_filename, file_content)
-            if reponse.status_code == 200:
-                image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_AVATAR_BUCKET}/{image_filename}"
+    try:
+        response = supabase.table("user").select("tag").eq("id", user_id).execute()
+        if response.data:
+            username = response.data[0]["tag"]
+            image_url = None
+            if avatar and avatar.filename != "":
+                image_filename = f"{username}-{avatar.filename}"
+                file_content = await avatar.read()
+                
+                # Detect content type properly
+                content_type = avatar.content_type
+                if not content_type:
+                    content_type = mimetypes.guess_type(avatar.filename)[0] or "application/octet-stream"
+                
+                # According to Supabase docs, contentType needs to be specified properly
+                try:
+                    upload_result = supabase_admin.storage.from_(SUPABASE_AVATAR_BUCKET).upload(
+                        image_filename, 
+                        file_content,
+                        file_options={
+                            "contentType": content_type,
+                            "upsert": "true"
+                        }
+                    )
+                    
+                    # UploadResponse object returns a path on success
+                    if upload_result and hasattr(upload_result, 'path'):
+                        image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_AVATAR_BUCKET}/{image_filename}"
+                except Exception as upload_error:
+                    print(f"Avatar upload error detail: {str(upload_error)}")
 
-    if image_url:
-        supabase.table("user").update({"avatar": image_url}).eq("id", user_id).execute()
-        return {"message": "Avatar updated successfully!"}
-    else:
-        return {"message": "Avatar update failed!"}
+        if image_url:
+            supabase.table("user").update({"avatar_url": image_url}).eq("id", user_id).execute()
+            return {"message": "Avatar updated successfully!"}
+        else:
+            return {"message": "Avatar update failed!"}
+    except Exception as e:
+        print("Avatar upload error:", str(e))
+        return {"message": f"Avatar update failed with error: {str(e)}"}
             
 async def update_banner(user_id: int, banner: UploadFile = File(...)):
-    response = supabase.table("user").select("username").eq("id", user_id).execute()
-    if response.data:
-        username = response.data[0]["username"]
-        image_url = None
-        if banner and banner.filename != "":
-            image_filename = f"{username}-{banner.filename}"
-            file_content = await banner.read()
-            reponse = supabase.storage.from_(SUPABASE_BANNER_BUCKET).upload(image_filename, file_content)
-            if reponse.status_code == 200:
-                image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BANNER_BUCKET}/{image_filename}"
+    try:
+        response = supabase.table("user").select("tag").eq("id", user_id).execute()
+        if response.data:
+            username = response.data[0]["tag"]
+            image_url = None
+            if banner and banner.filename != "":
+                print("Banner was uploaded", banner.filename)
+                image_filename = f"{username}-{banner.filename}"
+                file_content = await banner.read()
                 
-    if image_url:
-        supabase.table("user").update({"banner": image_url}).eq("id", user_id).execute()
-        return {"message": "Banner updated successfully!"}
-    else:
-        return {"message": "Banner update failed!"}
+                # Detect content type properly
+                content_type = banner.content_type
+                if not content_type:
+                    content_type = mimetypes.guess_type(banner.filename)[0] or "application/octet-stream"
+                print(f"Detected content type: {content_type}")
+                
+                # According to Supabase docs, contentType needs to be specified properly
+                try:
+                    print("Attempting to upload to bucket:", SUPABASE_BANNER_BUCKET)
+                    upload_result = supabase_admin.storage.from_(SUPABASE_BANNER_BUCKET).upload(
+                        image_filename, 
+                        file_content,
+                        file_options={
+                            "contentType": content_type,
+                            "upsert": "true"
+                        }
+                    )
+                    print("Upload response:", upload_result)
+                    
+                    # UploadResponse object returns a path on success
+                    if upload_result and hasattr(upload_result, 'path'):
+                        print("Image was uploaded in supabase", image_filename)
+                        image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BANNER_BUCKET}/{image_filename}"
+                except Exception as upload_error:
+                    print(f"Banner upload error detail: {str(upload_error)}")
+                    
+        if image_url:
+            print("Image URL was generated", image_url)
+            supabase.table("user").update({"banner_url": image_url}).eq("id", user_id).execute()
+            return {"message": "Banner updated successfully!"}
+        else:
+            return {"message": "Banner update failed!"}
+    except Exception as e:
+        print("Banner upload error:", str(e))
+        return {"message": f"Banner update failed with error: {str(e)}"}

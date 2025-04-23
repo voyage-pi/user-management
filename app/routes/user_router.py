@@ -1,18 +1,28 @@
-from typing import Optional
-from fastapi import APIRouter,Cookie,File,UploadFile
-
+from app.models.response import ResponseBody
+from app.services.middleware import require_auth, get_current_user
+from fastapi import APIRouter,Request, status, File, UploadFile
 from app.models.user import UserLogin, UserRegister
-
-from app.handlers.user_handler import get_current_user, login_user, register_user, update_avatar, update_banner
+from app.handlers.user_handler import login_user, register_user, update_avatar, update_banner, select_all_users, select_user_info
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-
 # voyage_at is the cookie with the access_token of the session of the user
-@router.get("/current_user")
-async def get_user(voyage_at:Optional[str]=Cookie(None)):
+@router.get("/")
+async def get_all_users():
+    """Get all users from the database."""
+    return select_all_users()
+
+@router.get("/{user_id}")
+async def get_user(user_id: int):
     """Get information for a specific user by ID."""
-    return get_current_user(voyage_at)
+    return select_user_info(user_id)
+
+@router.get("/current_user")
+@require_auth
+async def get_user(request:Request):
+    """Get information for a specific user by ID."""
+    user =get_current_user(request)
+    return ResponseBody(user.model_dump(),"",status.HTTP_200_OK)
 
 @router.post("/login")
 async def login(user: UserLogin):
