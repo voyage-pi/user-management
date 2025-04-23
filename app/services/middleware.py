@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Request, HTTPException, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Callable, Optional
+from fastapi import Request, HTTPException, status
+from typing import Callable
 from functools import wraps
 from app.services.supabase_client import supabase
 from app.models.user import User
