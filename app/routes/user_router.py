@@ -1,8 +1,8 @@
 from app.models.response import ResponseBody
 from app.services.middleware import require_auth, get_current_user
 from fastapi import APIRouter,Request, status, File, UploadFile
-from app.models.user import UserLogin, UserRegister
-from app.handlers.user_handler import login_user, register_user, update_avatar, update_banner, select_all_users, select_user_info
+from app.models.user import UserLogin, UserRegister, UserUpdate
+from app.handlers.user_handler import login_user, register_user, update_avatar, update_banner, select_all_users, select_user_info, update_user_info
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -43,3 +43,8 @@ async def upload_avatar(user_id: int, avatar: UploadFile = File(...)):
 async def upload_banner(user_id: int, banner: UploadFile = File(...)):
     """Update the banner for a specific user."""
     return await update_banner(user_id, banner)
+
+@router.patch("/{user_id}/user-update")
+async def update_user(user_id: int, user_update: UserUpdate):
+    """Update user information like name, tag, bio, and show_trips."""
+    return await update_user_info(user_id, user_update)
