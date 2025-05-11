@@ -22,5 +22,5 @@ class User(BaseModel):
     avatar_url: str | None
     banner_url: str | None
     bio: str | None
-    show_trips: bool | None
+    show_trips: bool
     id: int

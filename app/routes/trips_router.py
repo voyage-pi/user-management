@@ -1,8 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
-from app.handlers.trips_handler import select_all_trips, create_trip, select_user_trips, select_user_invitations, select_user_invites, make_invite, accept_invitation, reject_invitation, remove_participant, remove_owner
+from app.handlers.trips_handler import select_all_trips, create_trip, select_user_trips, select_user_invitations, select_user_invites, make_invite, accept_invitation, reject_invitation, trip_participants, is_trip_owner, remove_participant
 from app.services.middleware import get_current_user, require_auth
-from fastapi import APIRouter,Request
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
@@ -13,49 +12,66 @@ async def get_all_trips():
 
 @router.post("/save")
 @require_auth
-async def post_trip(trip_id:str,request:Request):
+async def post_trip(trip_id: str, request: Request):
     """Create a new trip in the database."""
     user = get_current_user(request)
-    return create_trip(user.id,trip_id)
+    return create_trip(user.id, trip_id)
 
-@router.get("/users/{user_id}")
-async def get_user_trips(user_id: int):
+@router.get("/users/")
+@require_auth
+async def get_user_trips(request: Request):
     """Get all trips for a specific user."""
-    return select_user_trips(user_id)
+    user = get_current_user(request)
+    return select_user_trips(user.id)
 
-@router.get("/invitations/users/{user_id}")
-async def get_user_invitations(user_id: int):
+@router.get("/invitations/users/")
+@require_auth
+async def get_user_invitations(request: Request):
     """Get all invitations for a specific user."""
-    return select_user_invitations(user_id)
+    user = get_current_user(request)
+    return select_user_invitations(user.id)
 
-@router.get("/invites/users/{user_id}")
-async def get_user_invites(user_id: int):
+@router.get("/invites/users/")
+@require_auth
+async def get_user_invites(request: Request):
     """Get all invites for a specific user."""
-    return select_user_invites(user_id)
+    user = get_current_user(request)
+    return select_user_invites(user.id)
 
 @router.post("/invitations")
-async def create_invitation(user_id: int, trip_id: str):
+@require_auth
+async def create_invitation(trip_id: str, request: Request):
     """Invite a user to a trip."""
-    return make_invite(user_id, trip_id)
+    user = get_current_user(request)
+    return make_invite(user.id, trip_id)
 
 @router.patch("/invitations")
-async def accept_trip_invitation(user_id: int, trip_id: str):
+@require_auth
+async def accept_trip_invitation(trip_id: str, request: Request):
     """Accept an invitation to a trip."""
-    return accept_invitation(user_id, trip_id)
+    user = get_current_user(request)
+    return accept_invitation(user.id, trip_id)
 
 @router.delete("/invitations")
-async def reject_trip_invitation(user_id: int, trip_id: str):
+@require_auth
+async def reject_trip_invitation(trip_id: str, request: Request):
     """Reject an invitation to a trip."""
-    return reject_invitation(user_id, trip_id)
+    user = get_current_user(request)
+    return reject_invitation(user.id, trip_id)
 
-@router.delete("/{trip_id}/participants/{user_id}")
-async def remove_trip_participant(trip_id: str, user_id: int):
-    """Remove a participant from a trip."""
-    return remove_participant(user_id, trip_id)
+@router.get("/{trip_id}/participants/")
+@require_auth
+async def get_trip_participants(trip_id: str, request: Request):
+    """Get all participants of a trip."""
+    user = get_current_user(request)
+    return trip_participants(trip_id)
 
-@router.delete("/{trip_id}/owner")
-async def remove_trip_owner(trip_id: str):
-    """Remove the owner from a trip and promote the longest-participating member to owner."""
-    return remove_owner(trip_id)
-
-
+@router.delete("/{trip_id}/participants/")
+@require_auth
+async def remove_trip_participant(user_id: int, trip_id: str, request: Request):
+    """Remove a participant from a trip. If the participant is the owner, ownership will be transferred to the longest-standing participant."""
+    user = get_current_user(request)
+    if is_trip_owner(user.id, trip_id):
+        return remove_participant(user_id, trip_id)
+    else:
+        return {"message": "You are not the owner of this trip."}
