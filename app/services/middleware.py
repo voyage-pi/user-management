@@ -41,7 +41,7 @@ def require_auth(func: Callable):
             user_email = auth_user.user.user_metadata['email']
             
             # Get user data from your table
-            response = supabase.table("user").select("id,tag, email, name, avatar_url, bio, banner_url, created_at").eq("email", user_email).execute()
+            response = supabase.table("user").select("id,tag, email, name, avatar_url, bio, banner_url, created_at, show_trips").eq("email", user_email).execute()
             
             if not response.data or len(response.data) == 0:
                 raise HTTPException(

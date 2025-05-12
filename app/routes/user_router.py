@@ -1,8 +1,8 @@
 from app.models.response import ResponseBody
 from app.services.middleware import require_auth, get_current_user
 from fastapi import APIRouter,Request, status, File, UploadFile
-from app.models.user import UserLogin, UserRegister
-from app.handlers.user_handler import login_user, register_user, update_avatar, update_banner, select_all_users, select_user_info
+from app.models.user import UserLogin, UserRegister, UserUpdate
+from app.handlers.user_handler import login_user, register_user, update_avatar, update_banner, select_all_users, select_user_info, update_user_info
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -16,7 +16,7 @@ async def get_all_users():
 @require_auth
 async def get_user_auth(request:Request):
     """Get information for a specific user by ID."""
-    user =get_current_user(request)
+    user = get_current_user(request)
     return ResponseBody(user.model_dump(),"",status.HTTP_200_OK)
 
 @router.get("/{user_id}")
@@ -34,12 +34,23 @@ async def register(user: UserRegister):
     """Register a new user account."""
     return register_user(user)
 
-@router.patch("/{user_id}/avatar")
-async def upload_avatar(user_id: int, avatar: UploadFile = File(...)):
+@router.patch("/avatar")
+@require_auth
+async def upload_avatar(request: Request, avatar: UploadFile = File(...)):
     """Update the avatar for a specific user."""
-    return await update_avatar(user_id, avatar)
+    user = get_current_user(request)
+    return await update_avatar(user.id, avatar)
 
-@router.patch("/{user_id}/banner")
-async def upload_banner(user_id: int, banner: UploadFile = File(...)):
+@router.patch("/banner")
+@require_auth
+async def upload_banner(request: Request, banner: UploadFile = File(...)):
     """Update the banner for a specific user."""
-    return await update_banner(user_id, banner)
+    user = get_current_user(request)
+    return await update_banner(user.id, banner)
+
+@router.patch("/user-update")
+@require_auth
+async def update_user(user_update: UserUpdate, request:Request):
+    """Update user information like name, tag, bio, and show_trips."""
+    user = get_current_user(request)
+    return await update_user_info(user.id, user_update)
