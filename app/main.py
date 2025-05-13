@@ -10,18 +10,15 @@ app.include_router(friends_router.router)
 app.include_router(trips_router.router)
 app.include_router(trip_info_router.router)
 
-origins = [
-    "http://localhost:8080",
-    "http://localhost:5173",
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 async def root():
