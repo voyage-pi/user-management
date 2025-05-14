@@ -49,7 +49,6 @@ def login_user(user: UserLogin):
 
 def register_user(user: UserRegister):
     insertUser=user.model_dump()
-    insertUser["tag"]=user.name.lower()
     password=insertUser.pop("password")
     if len(password) <6:
         return ResponseBody({},"Password has to be greater then 6 characters!",status.HTTP_500_INTERNAL_SERVER_ERROR)

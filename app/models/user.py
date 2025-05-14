@@ -7,6 +7,7 @@ class UserLogin(BaseModel):
 class UserRegister(BaseModel):
     name: str
     email: str
+    tag: str
     password:str
 
 class UserUpdate(BaseModel):
