@@ -37,26 +37,23 @@ async def get_user_trip_stats(user_id: str):
 
         async with httpx.AsyncClient() as client:
             for trip_id in trip_ids:
-                response = await client.get(f"{TRIP_MANAGEMENT_URL}/trips/{trip_id}")
+                response = await client.get(f"{TRIP_MANAGEMENT_URL}/api/trips/{trip_id}")
                 if response.status_code == 200:
                     trip_data = response.json()
-                    itinerary = trip_data.get("data", {}).get("itinerary", {})
+                    itinerary = trip_data.get("response", {}).get("itinerary", {})
                     
-                    # Process trip data
-                    for day in itinerary.get("days", []):
-                        for activity in day.get("activities", []):
-                            if "country" in activity:
-                                stats["countries_visited"].add(activity["country"])
-                            if "city" in activity:
-                                stats["cities_visited"].add(activity["city"])
+                    # Add country and city from itinerary level
+                    if "country" in itinerary:
+                        print(itinerary["country"])
+                        stats["countries_visited"].add(itinerary["country"])
+                    if "city" in itinerary:
+                        print(itinerary["city"])
+                        stats["cities_visited"].add(itinerary["city"])
                     
-                    # Add days
-                    start_date = trip_data.get("start_date")
-                    end_date = trip_data.get("end_date")
-                    if start_date and end_date:
-                        delta = datetime.fromisoformat(end_date) - datetime.fromisoformat(start_date)
-                        stats["total_days"] += delta.days + 1
-
+                    # Count days based on the days array length
+                    if "days" in itinerary:
+                        stats["total_days"] += len(itinerary["days"])
+                        print(stats["total_days"])
         # Convert sets to counts
         stats["countries_visited"] = len(stats["countries_visited"])
         stats["cities_visited"] = len(stats["cities_visited"])
