@@ -61,9 +61,10 @@ async def search_for_users(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/requests")
+@require_auth
 async def create_friend_request(
     request: Request,
-    friend_id: Union[int, str] = Body(..., description="ID, email, or username of the user to send the request to")
+    body: dict = Body(..., description="Request body containing friend_id")
 ):
     """
     Send a friend request from one user to another.
@@ -73,6 +74,8 @@ async def create_friend_request(
     try:
         if not user:
             raise HTTPException(status_code=400, detail="User ID is required")
+        
+        friend_id = body.get('friend_id')
         if not friend_id:
             raise HTTPException(status_code=400, detail="Friend ID, email, or username is required")
             
@@ -89,11 +92,11 @@ async def create_friend_request(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.patch("/requests")
+@router.post("/accept")
 @require_auth
 async def accept_friend_request(
     request: Request,
-    friend_id: int = Body(..., description="ID of the user accepting the request")
+    body: dict = Body(..., description="Request body containing friend_id")
 ):
     """Accept a pending friend request. 
     
@@ -103,6 +106,7 @@ async def accept_friend_request(
     """
     try:
         user = get_current_user(request)
+        friend_id = body.get('friend_id')
         print(f"Accepting friend request from {user.id} to {friend_id}")
         return accept_friend(user.id, friend_id)
     except Exception as e:
@@ -113,7 +117,7 @@ async def accept_friend_request(
 @require_auth
 async def delete_friend_relationship(
     request: Request,
-    friend_id: int = Body(..., description="ID of the user rejecting the request")
+    body: dict = Body(..., description="Request body containing friend_id")
 ):
     """Remove a friend relationship between two users or reject a friend request.
     
@@ -123,6 +127,7 @@ async def delete_friend_relationship(
     """
     try:
         user = get_current_user(request)
+        friend_id = body.get('friend_id')
         print(f"Removing friend relationship between {user.id} and {friend_id}")
         return remove_friend(user.id, friend_id)
     except Exception as e:

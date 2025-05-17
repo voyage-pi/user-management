@@ -105,10 +105,11 @@ def accept_friend(user_id: int, friend_id: int):
         return {"message": "Cannot accept a friend request from yourself."}
     
     # First find the friendship record to ensure it exists
+    # Note: user_id is the sender, friend_id is the receiver in the pending request
     response_find = supabase.table("user_friends") \
         .select("*") \
-        .eq("user_id", user_id) \
-        .eq("friend_id", friend_id) \
+        .eq("user_id", friend_id) \
+        .eq("friend_id", user_id) \
         .eq("status", "pending") \
         .execute()
     
@@ -117,40 +118,32 @@ def accept_friend(user_id: int, friend_id: int):
     if not response_find.data:
         return {"message": "Friend request not found!"}
     
-    # Update both directions of the relationship to "ok"
-    response1 = supabase.table("user_friends") \
-        .update({"status": "ok"}) \
-        .eq("user_id", user_id) \
-        .eq("friend_id", friend_id) \
-        .execute()
-    
-    # Check if the reverse direction exists, if not create it
-    response_check = supabase.table("user_friends") \
-        .select("*") \
-        .eq("user_id", friend_id) \
-        .eq("friend_id", user_id) \
-        .execute()
-    
-    if response_check.data:
-        # Update existing record
-        response2 = supabase.table("user_friends") \
+    try:
+        # Update the existing request to "ok"
+        response1 = supabase.table("user_friends") \
             .update({"status": "ok"}) \
             .eq("user_id", friend_id) \
             .eq("friend_id", user_id) \
             .execute()
-    else:
-        # Create the reverse direction
+        
+        # Create the reverse direction with "ok" status
         response2 = supabase.table("user_friends") \
-            .insert({"user_id": friend_id, "friend_id": user_id, "status": "ok"}) \
+            .insert({
+                "user_id": user_id,
+                "friend_id": friend_id,
+                "status": "ok"
+            }) \
             .execute()
-    
-    print(f"Update responses: {response1.data}, {response2.data}")
-    
-    if response1.data:
-        # Successfully updated at least one direction
-        return {"message": "Friend accepted!"}
-    else:
-        return {"message": "Friend acceptance failed!"}
+        
+        print(f"Update responses: {response1.data}, {response2.data}")
+        
+        if response1.data and response2.data:
+            return {"message": "Friend accepted!"}
+        else:
+            return {"message": "Friend acceptance failed!"}
+    except Exception as e:
+        print(f"Error accepting friend request: {e}")
+        return {"message": f"Friend acceptance failed: {str(e)}"}
 
 def get_friend_requests_sent(user_id: int):
     """
