@@ -4,7 +4,7 @@ import mimetypes
 from app.services.supabase_client import supabase, supabase_admin
 from app.config.settings import SUPABASE_URL, SUPABASE_AVATAR_BUCKET, SUPABASE_BANNER_BUCKET
 from fastapi import status
-from app.models.user import UserLogin, UserRegister,User
+from app.models.user import UserLogin, UserRegister, User, UserUpdate
 from app.models.response import ResponseBody
 
 def select_all_users():
@@ -49,7 +49,6 @@ def login_user(user: UserLogin):
 
 def register_user(user: UserRegister):
     insertUser=user.model_dump()
-    insertUser["tag"]=user.name.lower()
     password=insertUser.pop("password")
     if len(password) <6:
         return ResponseBody({},"Password has to be greater then 6 characters!",status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -151,3 +150,27 @@ async def update_banner(user_id: int, banner: UploadFile = File(...)):
     except Exception as e:
         print("Banner upload error:", str(e))
         return {"message": f"Banner update failed with error: {str(e)}"}
+
+async def update_user_info(user_id: int, user_update: UserUpdate):
+    """Update user information like name, tag, bio, and show_trips."""
+    try:
+        # Check if user exists
+        response = supabase.table("user").select("*").eq("id", user_id).execute()
+        if not response.data:
+            return ResponseBody({}, "User not found!", status.HTTP_404_NOT_FOUND)
+        
+        # Prepare update data by removing None values
+        update_data = user_update.model_dump(exclude_unset=True)
+        if not update_data:
+            return ResponseBody({}, "No valid fields to update!", status.HTTP_400_BAD_REQUEST)
+        
+        # Update user information
+        supabase.table("user").update(update_data).eq("id", user_id).execute()
+        
+        # Get updated user data
+        updated_user = supabase.table("user").select("*").eq("id", user_id).execute()
+        
+        return ResponseBody(updated_user.data[0], "User information updated successfully!", status.HTTP_200_OK)
+    except Exception as e:
+        print("User update error:", str(e))
+        return ResponseBody({}, f"Failed to update user information: {str(e)}", status.HTTP_500_INTERNAL_SERVER_ERROR)

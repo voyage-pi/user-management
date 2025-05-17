@@ -7,13 +7,21 @@ class UserLogin(BaseModel):
 class UserRegister(BaseModel):
     name: str
     email: str
+    tag: str
     password:str
 
-class User(BaseModel):
-    tag:str|None
-    name:str
-    email:str
-    avatar_url:str | None
-    banner_url:str | None
-    id:int
+class UserUpdate(BaseModel):
+    name: str | None = None
+    tag: str | None = None
+    bio: str | None = None
+    show_trips: bool | None = None
 
+class User(BaseModel):
+    tag: str
+    name: str
+    email: str
+    avatar_url: str | None
+    banner_url: str | None
+    bio: str | None
+    show_trips: bool
+    id: int

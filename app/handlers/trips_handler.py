@@ -75,25 +75,60 @@ def reject_invitation(user_id: int, trip_id: str):
     else:
         return {"message": "Rejection failed!"}
     
-def remove_participant(user_id: int, trip_id: str):
-    response = supabase.table("user_trips").delete().eq("user_id", user_id).eq("trip_id", trip_id).eq("status", "participant").execute()
+def trip_participants(trip_id: str):
+    response = supabase.table("user_trips").select("*").eq("trip_id", trip_id).execute()
     if response.data:
         return response.data
     else:
-        return {"message": "Removal failed!"}
+        return {"message": "No participants found!"}
     
-def remove_owner(trip_id: str):
-    response1 = supabase.table("user_trips").delete().eq("trip_id", trip_id).eq("status", "owner").execute()
-    print(response1.data)
-    response2 = supabase.table("user_trips").select("*").eq("trip_id", trip_id).order("joined_trip_at", desc=True).execute()
-    print(response2.data)
-    if response1.data and response2.data:
-        new_owner = response2.data[0]["user_id"]
-        response3 = supabase.table("user_trips").update({"status": "owner"}).eq("user_id", new_owner).eq("trip_id", trip_id).execute()
-        print(response3.data)
-        if response3.data:
-            return response3.data
-        else:
-            return {"message": "Owner update failed!"}
+def is_trip_owner(user_id: int, trip_id: str):
+    response = supabase.table("user_trips").select("*").eq("user_id", user_id).eq("trip_id", trip_id).eq("status", "owner").execute()
+    if response.data:
+        return True
     else:
-        return {"message": "Owner removal failed!"}
+        return False
+    
+def remove_participant(user_id: int, trip_id: str):
+    """
+    Remove a participant from a trip. If the participant is the owner,
+    transfer ownership to the longest-standing participant.
+    """
+    # First check if the user is the owner
+    is_owner = is_trip_owner(user_id, trip_id)
+    
+    # Remove the user from the trip
+    response = supabase.table("user_trips").delete().eq("user_id", user_id).eq("trip_id", trip_id).execute()
+    
+    if not response.data:
+        return {"message": "Failed to remove participant"}
+    
+    # If the removed user was the owner, transfer ownership to the longest-standing participant
+    if is_owner:
+        # Get all remaining participants ordered by join date (oldest first)
+        remaining_participants = supabase.table("user_trips")\
+            .select("*")\
+            .eq("trip_id", trip_id)\
+            .order("joined_trip_at", desc=False)\
+            .execute()
+        
+        if remaining_participants.data and len(remaining_participants.data) > 0:
+            # Get the longest-standing participant
+            new_owner = remaining_participants.data[0]
+            
+            # Update their status to owner
+            update_response = supabase.table("user_trips")\
+                .update({"status": "owner"})\
+                .eq("user_id", new_owner["user_id"])\
+                .eq("trip_id", trip_id)\
+                .execute()
+            
+            if update_response.data:
+                return {
+                    "message": "Participant removed and ownership transferred",
+                    "new_owner": new_owner["user_id"]
+                }
+            else:
+                return {"message": "Participant removed but ownership transfer failed"}
+    
+    return {"message": "Participant removed successfully"}
