@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import user_router, friends_router, trips_router, trip_info_router, places_router
+from app.routes import questions_router, user_router, friends_router, trips_router, trip_info_router, places_router
 
 app = FastAPI()
 
@@ -10,6 +10,7 @@ app.include_router(friends_router.router)
 app.include_router(trips_router.router)
 app.include_router(trip_info_router.router)
 app.include_router(places_router.router)
+app.include_router(questions_router.router)
 
 
 app.add_middleware(
