@@ -38,12 +38,12 @@ async def get_user_invites(request: Request):
     user = get_current_user(request)
     return select_user_invites(user.id)
 
-@router.post("/invite/{trip_id}")
+@router.post("/invite/{user_id}/{trip_id}")
 @require_auth
-async def invite_user(trip_id: str, request: Request):
+async def invite_user(user_id: int, trip_id: str, request: Request):
     """Invite a user to a trip."""
     user = get_current_user(request)
-    return make_invite(user.id, trip_id)
+    return make_invite(user_id, trip_id)
 
 @router.post("/accept/{trip_id}")
 @require_auth
