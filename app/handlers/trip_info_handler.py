@@ -16,7 +16,7 @@ async def get_user_trip_stats(user_id: str):
     """
     try:
         # Get all trip IDs for the user from Supabase
-        response = supabase.table('user_trips').select('trip_id').eq('user_id', user_id).execute()
+        response = supabase.table('user_trips').select('trip_id').eq('user_id', user_id).neq('status', 'pending').execute()
         trip_ids = [record['trip_id'] for record in response.data]
 
         if not trip_ids:
@@ -67,7 +67,7 @@ async def get_user_trips(user_id: str):
     Get all trip IDs for a user
     """
     try:
-        response = supabase.table('user_trips').select('trip_id').eq('user_id', user_id).execute()
+        response = supabase.table('user_trips').select('trip_id').eq('user_id', user_id).neq('status', 'pending').execute()
         trip_ids = [record['trip_id'] for record in response.data]
         return {"message": "Trip IDs retrieved successfully", "data": {"trip_ids": trip_ids}}
     except Exception as e:
