@@ -84,7 +84,7 @@ def reject_invitation(user_id: int, trip_id: str):
         return {"message": "Rejection failed!"}
     
 def trip_participants(trip_id: str):
-    response = supabase.table("user_trips").select("*").eq("trip_id", trip_id).execute()
+    response = supabase.table("user_trips").select("*").eq("trip_id", trip_id).neq("status", "pending").execute()
     if response.data:
         return response.data
     else:

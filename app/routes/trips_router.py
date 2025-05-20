@@ -61,6 +61,7 @@ async def reject_trip_invitation(trip_id: str, request: Request):
 
 @router.get("/participants/{trip_id}")
 @require_auth
-async def get_trip_participants(trip_id: str):
+async def get_trip_participants(trip_id: str, request: Request):
     """Get all participants of a trip."""
+    user = get_current_user(request)
     return trip_participants(trip_id)
