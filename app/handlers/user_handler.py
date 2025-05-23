@@ -67,6 +67,20 @@ def register_user(user: UserRegister):
         print(e)
         return ResponseBody({},"User already exists",status.HTTP_409_CONFLICT)
 
+def logout_user():
+    try:
+        supabase.auth.sign_out()
+        response = ResponseBody({}, "Logged out successfully!", status.HTTP_200_OK)
+        response.set_cookie_header({
+            "key": "voyage_at",
+            "value": "",
+            "httponly": True,
+            "max_age": 0
+        })
+        return response
+    except Exception as e:
+        print(e)
+        return ResponseBody({}, str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 async def update_avatar(user_id: int, avatar: UploadFile = File(...)):
     try:
