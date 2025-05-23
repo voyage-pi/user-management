@@ -202,41 +202,23 @@ def get_friend_requests_received(user_id: int):
 
 def search_users(search_term: str, current_user_id: int = None):
     """
-    Search for users by email, tag, or user ID.
-    
+    Search for users by name or tag only.
     Args:
-        search_term: The email, tag, or user ID to search for
+        search_term: The name or tag to search for
         current_user_id: The ID of the current user (to exclude from results)
-        
     Returns:
         List of matching users with their details
     """
     try:
-        # Check if search_term is a numeric ID
-        if search_term.isdigit():
-            response = supabase.table("user").select("id, tag, email, name, avatar_url").eq("id", int(search_term)).execute()
-        else:
-            # Search in both email and tag fields
-            email_response = supabase.table("user").select("id, tag, email, name, avatar_url").ilike("email", f"%{search_term}%").execute()
-            tag_response = supabase.table("user").select("id, tag, email, name, avatar_url").ilike("tag", f"%{search_term}%").execute()
-            
-            # Combine results (removing duplicates)
-            result_data = email_response.data + [user for user in tag_response.data if user['id'] not in [u['id'] for u in email_response.data]]
-            
-            # Filter out the current user if provided
-            if current_user_id is not None:
-                result_data = [user for user in result_data if user['id'] != current_user_id]
-                
-            return result_data
-            
-        if response.data:
-            # Filter out the current user if provided
-            if current_user_id is not None and len(response.data) > 0:
-                result_data = [user for user in response.data if user['id'] != current_user_id]
-                return result_data
-            return response.data
-            
-        return []
+        # Search in both name and tag fields
+        name_response = supabase.table("user").select("id, tag, email, name, avatar_url").ilike("name", f"%{search_term}%").execute()
+        tag_response = supabase.table("user").select("id, tag, email, name, avatar_url").ilike("tag", f"%{search_term}%").execute()
+        # Combine results (removing duplicates)
+        result_data = name_response.data + [user for user in tag_response.data if user['id'] not in [u['id'] for u in name_response.data]]
+        # Filter out the current user if provided
+        if current_user_id is not None:
+            result_data = [user for user in result_data if user['id'] != current_user_id]
+        return result_data
     except Exception as e:
         print(f"Error searching users: {e}")
         return {"error": str(e)}

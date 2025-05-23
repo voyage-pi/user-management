@@ -33,13 +33,13 @@ async def select_shared_trips(user_id: str, request: Request):
     Get all trips made with other users
     """
     user = get_current_user(request)
-    return await get_shared_trips(user_id)
+    return await get_shared_trips(user_id, user.id)
 
-@router.get("/last-shared-trip/{user_id}/{other_user_id}")
+@router.get("/last-shared-trip/{user_id}")
 @require_auth
-async def select_last_shared_trip(user_id: str, other_user_id: str, request: Request):
+async def select_last_shared_trip(user_id: str, request: Request):
     """
     Get details of the last trip between two users
     """
     user = get_current_user(request)
-    return await get_last_shared_trip(user_id, other_user_id) 
+    return await get_last_shared_trip(user_id, user.id) 
