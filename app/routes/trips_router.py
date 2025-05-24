@@ -15,7 +15,7 @@ async def get_all_trips():
 async def save_trip(body: TripSaveBody, request: Request):
     """Create a new trip in the database."""
     user = get_current_user(request)
-    return create_trip(user.id, body.trip_id, body.is_group)
+    return create_trip(user.id, body.trip_id, body.is_group, is_save_operation=True)
 
 @router.get("/user")
 @require_auth
@@ -65,3 +65,12 @@ async def get_trip_participants(trip_id: str, request: Request):
     """Get all participants of a trip."""
     user = get_current_user(request)
     return trip_participants(trip_id)
+
+@router.get("/participants-count/{trip_id}")
+async def get_trip_participants_count(trip_id: str):
+    """Get the count of participants for a trip (no authentication required)."""
+    participants = trip_participants(trip_id)
+    if isinstance(participants, list):
+        return {"count": len(participants), "has_participants": len(participants) > 0}
+    else:
+        return {"count": 0, "has_participants": False}
