@@ -2,7 +2,7 @@ from app.models.response import ResponseBody
 from app.services.middleware import require_auth, get_current_user
 from fastapi import APIRouter,Request, status, File, UploadFile
 from app.models.user import UserLogin, UserRegister, UserUpdate
-from app.handlers.user_handler import login_user, register_user, update_avatar, update_banner, select_all_users, select_user_info, update_user_info
+from app.handlers.user_handler import login_user, register_user, update_avatar, update_banner, select_all_users, select_user_info, update_user_info, logout_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -54,3 +54,9 @@ async def update_user(user_update: UserUpdate, request:Request):
     """Update user information like name, tag, bio, and show_trips."""
     user = get_current_user(request)
     return await update_user_info(user.id, user_update)
+
+@router.post("/logout")
+@require_auth
+async def logout(request: Request):
+    """Logout the current user and invalidate their session."""
+    return logout_user()

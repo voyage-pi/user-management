@@ -47,11 +47,11 @@ async def get_received_requests(request: Request):
 
 @router.get("/search")
 async def search_for_users(
-    term: str = Query(..., description="Email, username, or user ID to search for"),
+    term: str = Query(..., description="Name or tag to search for"),
     current_user_id: int = Query(None, description="Current user ID to exclude from results")
 ):
     """
-    Search for users by email, username, or user ID.
+    Search for users by name or tag only.
     This endpoint can be used to find users to send friend requests to.
     """
     try:
