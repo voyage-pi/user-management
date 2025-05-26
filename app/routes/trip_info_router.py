@@ -15,7 +15,8 @@ async def select_user_trip_stats(user_id: str, request: Request):
     - Number of days traveled
     """
     user = get_current_user(request)
-    return await get_user_trip_stats(user_id)
+    auth_token = request.cookies.get("voyage_at")
+    return await get_user_trip_stats(user_id, auth_token)
 
 @router.get("/trips/{user_id}")
 @require_auth
@@ -33,7 +34,8 @@ async def select_shared_trips(user_id: str, request: Request):
     Get all trips made with other users
     """
     user = get_current_user(request)
-    return await get_shared_trips(user_id, user.id)
+    auth_token = request.cookies.get("voyage_at")
+    return await get_shared_trips(user_id, user.id, auth_token)
 
 @router.get("/last-shared-trip/{user_id}")
 @require_auth
@@ -42,4 +44,5 @@ async def select_last_shared_trip(user_id: str, request: Request):
     Get details of the last trip between two users
     """
     user = get_current_user(request)
-    return await get_last_shared_trip(user_id, user.id) 
+    auth_token = request.cookies.get("voyage_at")
+    return await get_last_shared_trip(user_id, user.id, auth_token) 
