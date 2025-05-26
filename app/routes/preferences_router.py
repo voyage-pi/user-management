@@ -19,7 +19,7 @@ async def get_user_list_preferences(request:Request):
     return get_preferences_form(user)
 
 
-@router.get("{id}")
+@router.get("/{id}")
 @require_auth
 async def get_pref_id(id:int,request:Request):
     user=get_current_user(request)
