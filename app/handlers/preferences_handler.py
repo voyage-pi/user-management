@@ -69,15 +69,15 @@ def insert_preferences(pref:Preferences,user:User):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-def associate_user_preferences_trip(preferences_id:int,trip_id:str,user_id:int):
+def associate_user_preferences_trip(preference_id:int,trip_id:str,user_id:int):
     try:
         pref_check = supabase.table("preferences")\
         .select("id")\
-        .eq("id", preferences_id)\
+        .eq("id", preference_id)\
         .execute()
 
         if not pref_check.data:
-            return {"error": f"Preference ID {preferences_id} does not exist."}
+            return {"error": f"Preference ID {preference_id} does not exist."}
 
         trip_check = supabase.table("user_trips")\
         .select("id")\
@@ -90,7 +90,7 @@ def associate_user_preferences_trip(preferences_id:int,trip_id:str,user_id:int):
 
         duplicate_check = supabase.table("user_preferences")\
         .select("id")\
-        .eq("preferences_id", preferences_id)\
+        .eq("preference_id", preference_id)\
         .eq("user_trips_id", trip_check.data.id)\
         .execute()
 
@@ -99,7 +99,7 @@ def associate_user_preferences_trip(preferences_id:int,trip_id:str,user_id:int):
 
         insert_response = supabase.table("user_preferences")\
         .insert({
-            "preferences_id": preferences_id,
+            "preference_id": preference_id,
             "user_trips_id": trip_check.data.id 
         }).execute()
 
