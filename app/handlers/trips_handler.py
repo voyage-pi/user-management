@@ -1,5 +1,6 @@
 from app.services.supabase_client import supabase
 from datetime import datetime
+from app.handlers.preferences_handler import associate_user_preferences_trip
 
 def select_all_trips():
     response = supabase.table("user_trips").select("*").execute()
@@ -8,10 +9,12 @@ def select_all_trips():
     else:
         return {"message": "No trips found!"}
     
-def create_trip(user_id: int, trip_id: str, trip_is_group: bool, is_save_operation: bool = False):
+def create_trip(user_id: int, trip_id: str, trip_is_group: bool, is_save_operation: bool = False, preference_id: int = None):
     # Validate trip_type
     if trip_is_group not in [True, False]:
         return {"message": "Invalid trip type! Must be 'individual' or 'group'"}
+    
+    print(f"DEBUG: create_trip called with user_id={user_id}, trip_id={trip_id}, trip_is_group={trip_is_group}, preference_id={preference_id}")
     
     # Check if user is already a participant in this trip
     existing_response = supabase.table("user_trips").select("*").eq("user_id", user_id).eq("trip_id", trip_id).execute()
@@ -21,29 +24,58 @@ def create_trip(user_id: int, trip_id: str, trip_is_group: bool, is_save_operati
         if is_save_operation:
             # For save operations, update the existing record
             print(f"Updating existing participant record for user {user_id} in trip {trip_id}")
-            update_response = supabase.table("user_trips").update({
+            update_data = {
                 "status": "group" if trip_is_group else "individual",
                 "joined_trip_at": datetime.now().isoformat()
-            }).eq("user_id", user_id).eq("trip_id", trip_id).execute()
+            }
+            if preference_id is not None:
+                update_data["preference_id"] = preference_id
+                print(f"DEBUG: Adding preference_id to update_data: {preference_id}")
+                
+            print(f"DEBUG: Update data: {update_data}")
+            update_response = supabase.table("user_trips").update(update_data).eq("user_id", user_id).eq("trip_id", trip_id).execute()
             
+            print(f"DEBUG: Update response: {update_response}")
             if update_response.data:
+                # If preference_id is provided, associate it with the trip in user_preferences table
+                if preference_id is not None:
+                    print(f"DEBUG: Associating preference {preference_id} with trip {trip_id} for user {user_id}")
+                    association_result = associate_user_preferences_trip(preference_id, trip_id, user_id)
+                    print(f"DEBUG: Association result: {association_result}")
+                    
                 return update_response.data[0]
             else:
+                print(f"DEBUG: Update failed - error: {update_response}")
                 return {"message": "Failed to update participant record!"}
         else:
             # For creation operations, reject duplicates
             return {"message": "User is already a participant in this trip!"}
         
     # Create new participant record if user is not already a participant
-    response = supabase.table("user_trips").insert({
+    insert_data = {
         "user_id": user_id, 
         "trip_id": trip_id, 
         "status": "group" if trip_is_group else "individual",
-        "joined_trip_at": datetime.now().isoformat()
-    }).execute()
+        "joined_trip_at": datetime.now().isoformat(),
+    }
+    if preference_id is not None:
+        insert_data["preference_id"] = preference_id
+        print(f"DEBUG: Adding preference_id to insert_data: {preference_id}")
+        
+    print(f"DEBUG: Insert data: {insert_data}")
+    response = supabase.table("user_trips").insert(insert_data).execute()
+    print(f"DEBUG: Insert response: {response}")
+    
     if response.data:
+        # If preference_id is provided, associate it with the trip in user_preferences table
+        if preference_id is not None:
+            print(f"DEBUG: Associating preference {preference_id} with trip {trip_id} for user {user_id}")
+            association_result = associate_user_preferences_trip(preference_id, trip_id, user_id)
+            print(f"DEBUG: Association result: {association_result}")
+            
         return response.data
     else:
+        print(f"DEBUG: Insert failed - error: {response}")
         return {"message": "Trip creation failed!"}
     
 def select_user_trips(user_id: int):
@@ -110,6 +142,11 @@ def trip_participants(trip_id: str):
     response = supabase.table("user_trips").select("*").eq("trip_id", trip_id).neq("status", "pending").execute()
     if response.data:
         print(response.data)
-        return response.data
+        # Include preference_id in the response for the trip creator (first participant)
+        participants_with_preferences = []
+        for participant in response.data:
+            participant_data = dict(participant)
+            participants_with_preferences.append(participant_data)
+        return participants_with_preferences
     else:
         return {"message": "No participants found!"}
