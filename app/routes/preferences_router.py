@@ -45,7 +45,7 @@ async def get_all_pref_user(request: Request):
 @trip_preferences_router.put("/preferences/trip/{trip_id}")
 @require_auth
 async def update_trip_preferences(trip_id: str, preferences_data: dict, request: Request):
-    """Update preferences and trigger trip regeneration"""
+    """Update preferences and return success - trip regeneration should be handled via WebSocket"""
     try:
         print(f"Trip preferences endpoint called with trip_id: {trip_id}")
         print(f"Request data: {preferences_data}")
@@ -89,49 +89,18 @@ async def update_trip_preferences(trip_id: str, preferences_data: dict, request:
             print(f"Preferences update failed with status: {update_result.status_code}")
             return update_result
         
-        # Forward to trip-management service to regenerate trip
-        trip_management_url = "http://trip-management:8080/api/trip/{}/preferences".format(trip_id)
-        print(f"Calling trip management service at: {trip_management_url}")
-        
-        # Get the voyage cookie to forward authentication
-        voyage_cookie = request.cookies.get("voyage_at")
-        print(f"Found voyage cookie: {voyage_cookie is not None}")
-        
-        # Forward the request to trip-management service
-        try:
-            response = requests.put(
-                trip_management_url,
-                json=preferences_data,
-                cookies={"voyage_at": voyage_cookie} if voyage_cookie else None,
-                timeout=60
-            )
-            print(f"Trip management response status: {response.status_code}")
-            print(f"Trip management response text: {response.text[:200]}...")
-            
-            if response.status_code == 200:
-                # Return the trip-management response
-                return response.json()
-            else:
-                error_response = {"error": "Failed to regenerate trip"}
-                try:
-                    if response.text:
-                        error_response = response.json()
-                except:
-                    pass
-                
-                print(f"Error response: {error_response}")
-                return ResponseBody(
-                    error_response,
-                    "Failed to regenerate trip",
-                    status_code=response.status_code,
-                )
-        except Exception as req_error:
-            print(f"Request to trip management failed: {str(req_error)}")
-            return ResponseBody(
-                {"error": str(req_error)},
-                "Error connecting to trip management service",
-                status_code=status.HTTP_502_BAD_GATEWAY,
-            )
+        # Return success immediately - let frontend handle WebSocket regeneration
+        print("Preferences updated successfully, returning success for WebSocket handling")
+        return ResponseBody(
+            {
+                "message": "Preferences updated successfully",
+                "preference_id": preference_id,
+                "trip_id": trip_id,
+                "websocket_regeneration": True
+            },
+            "Preferences updated - use WebSocket for regeneration",
+            status_code=status.HTTP_200_OK,
+        )
             
     except Exception as e:
         print(f"Error in update_trip_preferences: {str(e)}")
