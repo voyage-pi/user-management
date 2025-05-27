@@ -24,6 +24,13 @@ async def get_user_list_preferences(request: Request):
     user = get_current_user(request)
     return get_preferences_form(user)
 
+@router.get("/user")
+@require_auth
+async def get_all_pref_user(request: Request):
+    user = get_current_user(request)
+    result = get_all_preferences_for_user(user)
+    return result
+
 @router.get("/{id}")
 @require_auth
 async def get_pref_id(id: int, request: Request):
@@ -35,12 +42,6 @@ async def get_pref_id(id: int, request: Request):
 async def update_pref_id(id: int, pref: Preferences, request: Request):
     user = get_current_user(request)
     return update_preferences(id, pref.answers, user)
-
-@router.get("/user")
-@require_auth
-async def get_all_pref_user(request: Request):
-    user = get_current_user(request)
-    return get_all_preferences_for_user(user)
 
 @trip_preferences_router.put("/preferences/trip/{trip_id}")
 @require_auth

@@ -187,7 +187,7 @@ def associate_user_preferences_trip(preference_id: int, trip_id: str, user_id: i
         duplicate_check = (
             supabase.table("user_preferences")
             .select("id")
-            .eq("preference_id", preference_id)
+            .eq("preferences_id", preference_id)
             .eq("user_trips_id", trip_check.data[0]["id"])
             .execute()
         )
@@ -199,7 +199,7 @@ def associate_user_preferences_trip(preference_id: int, trip_id: str, user_id: i
             supabase.table("user_preferences")
             .insert(
                 {
-                    "preference_id": preference_id,
+                    "preferences_id": preference_id,
                     "user_trips_id": trip_check.data[0]["id"],
                 }
             )
@@ -286,7 +286,6 @@ def get_all_preferences_for_user(user: User):
         pref_check = (
             supabase.table("preferences").select("*").eq("user_id", user.id).execute()
         )
-        print(pref_check)
 
         if not pref_check.data:
             return ResponseBody(
@@ -304,13 +303,15 @@ def get_all_preferences_for_user(user: User):
             }
             for pref in pref_check.data
         ]
-
+        
         return ResponseBody(
             {"preferences": preferences_list}, "", status_code=status.HTTP_200_OK
         )
 
     except Exception as e:
         print("Error fetching all preferences:", e)
+        import traceback
+        traceback.print_exc()
         return ResponseBody(
             {"error": f"{e}"},
             "An unexpected error revealed itself!",

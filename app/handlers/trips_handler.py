@@ -1,5 +1,6 @@
 from app.services.supabase_client import supabase
 from datetime import datetime
+from app.handlers.preferences_handler import associate_user_preferences_trip
 
 def select_all_trips():
     response = supabase.table("user_trips").select("*").execute()
@@ -36,6 +37,12 @@ def create_trip(user_id: int, trip_id: str, trip_is_group: bool, is_save_operati
             
             print(f"DEBUG: Update response: {update_response}")
             if update_response.data:
+                # If preference_id is provided, associate it with the trip in user_preferences table
+                if preference_id is not None:
+                    print(f"DEBUG: Associating preference {preference_id} with trip {trip_id} for user {user_id}")
+                    association_result = associate_user_preferences_trip(preference_id, trip_id, user_id)
+                    print(f"DEBUG: Association result: {association_result}")
+                    
                 return update_response.data[0]
             else:
                 print(f"DEBUG: Update failed - error: {update_response}")
@@ -60,6 +67,12 @@ def create_trip(user_id: int, trip_id: str, trip_is_group: bool, is_save_operati
     print(f"DEBUG: Insert response: {response}")
     
     if response.data:
+        # If preference_id is provided, associate it with the trip in user_preferences table
+        if preference_id is not None:
+            print(f"DEBUG: Associating preference {preference_id} with trip {trip_id} for user {user_id}")
+            association_result = associate_user_preferences_trip(preference_id, trip_id, user_id)
+            print(f"DEBUG: Association result: {association_result}")
+            
         return response.data
     else:
         print(f"DEBUG: Insert failed - error: {response}")
