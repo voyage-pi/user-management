@@ -12,6 +12,7 @@ app.include_router(trip_info_router.router)
 app.include_router(places_router.router)
 app.include_router(questions_router.router)
 app.include_router(preferences_router.router)
+app.include_router(preferences_router.trip_preferences_router)
 
 
 app.add_middleware(
