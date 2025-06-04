@@ -15,7 +15,7 @@ async def get_all_trips():
 async def save_trip(body: TripSaveBody, request: Request):
     """Create a new trip in the database."""
     user = get_current_user(request)
-    return create_trip(user.id, body.trip_id, body.is_group, is_save_operation=True)
+    return create_trip(user.id, body.trip_id, body.is_group, is_save_operation=True, preference_id=body.preference_id)
 
 @router.get("/user")
 @require_auth
